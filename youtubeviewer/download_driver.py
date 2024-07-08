@@ -21,20 +21,18 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
+import os
 import platform
 import shutil
 import subprocess
 import sys
-
-import undetected_chromedriver._compat as uc
-
+import undetected_chromedriver as uc
 from .colors import *
 
 CHROME = ['{8A69D345-D564-463c-AFF1-A69D9E530F96}',
           '{8237E44A-0054-442C-B6B6-EA0509993955}',
           '{401C381F-E0DE-4B85-8BD8-3F3F14FBDA57}',
           '{4ea16ac7-fd5a-47c3-875b-dbf4a2008c20}']
-
 
 def download_driver(patched_drivers):
     osname = platform.system()
@@ -105,13 +103,19 @@ def download_driver(patched_drivers):
 
         shutil.rmtree(patched_drivers, ignore_errors=True)
 
-    major_version = version.split('.')[0]
+    # Leaske: Convert major_version to an integer for proper comparison
+    major_version = int(version.split('.')[0])
 
-    uc.TARGET_VERSION = major_version
+    # Leaske: Updated to use ChromeOptions and initialize the driver with the major version
+    options = uc.ChromeOptions()
+    driver = uc.Chrome(version_main=major_version, options=options)
 
-    uc.install()
+    driver_path = driver.service.path  # Get the path to the downloaded driver
 
-    return osname, exe_name
+    # Ensure patched_drivers directory exists
+    os.makedirs(patched_drivers, exist_ok=True)
+
+    return osname, exe_name, driver_path
 
 
 def copy_drivers(cwd, patched_drivers, exe, total):
